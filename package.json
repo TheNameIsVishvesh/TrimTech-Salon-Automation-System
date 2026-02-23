@@ -1,0 +1,16 @@
+{
+  "name": "trimtech-salon",
+  "version": "1.0.0",
+  "description": "TrimTech – Salon Automation & Management System",
+  "private": true,
+  "scripts": {
+    "server": "npm --prefix server start",
+    "client": "npm --prefix client start",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "seed": "npm --prefix server run seed",
+    "install:all": "npm install && npm --prefix server install && npm --prefix client install"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
