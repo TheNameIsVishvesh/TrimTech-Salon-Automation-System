@@ -28,7 +28,7 @@ export default function ClientHome() {
           {appointments.map(apt => (
             <div key={apt._id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
               <div>
-                <strong>{apt.serviceId?.name}</strong> · {formatDate(apt.date)} {apt.slotStart}
+                <strong>{apt.serviceId?.name}</strong> · {formatDate(apt.date)} {apt.startTime}
                 <br />
                 <small style={{ color: 'var(--text-secondary)' }}>with {apt.employeeId?.name} · {apt.status}</small>
               </div>

@@ -29,7 +29,8 @@ exports.updateStatus = async (req, res) => {
     const leave = await Leave.findById(req.params.id);
     if (!leave) return res.status(404).json({ message: 'Leave not found' });
     if (req.user.role !== 'owner') return res.status(403).json({ message: 'Only owner can update' });
-    leave.status = req.body.status;
+    if (req.body.status) leave.status = req.body.status;
+    if (req.body.ownerComment !== undefined) leave.ownerComment = req.body.ownerComment;
     await leave.save();
     res.json(leave);
   } catch (err) {

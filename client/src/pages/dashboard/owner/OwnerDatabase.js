@@ -47,8 +47,8 @@ export default function OwnerDatabase() {
       employeeId: a.employeeId?._id || a.employeeId,
       serviceId: a.serviceId?._id || a.serviceId,
       date: a.date,
-      slotStart: a.slotStart,
-      slotEnd: a.slotEnd,
+      startTime: a.startTime,
+      endTime: a.endTime,
       status: a.status,
       totalAmount: a.totalAmount,
       invoiceNumber: a.invoiceNumber
@@ -105,7 +105,7 @@ export default function OwnerDatabase() {
           <tbody>
             {appointments.slice(0, 20).map(a => (
               <tr key={a._id} style={{ borderBottom: '1px solid var(--border)' }}>
-                <td style={{ padding: '0.5rem' }}>{formatDate(a.date)} {a.slotStart}</td>
+                <td style={{ padding: '0.5rem' }}>{formatDate(a.date)} {a.startTime}</td>
                 <td style={{ padding: '0.5rem' }}>{a.clientId?.name}</td>
                 <td style={{ padding: '0.5rem' }}>{a.employeeId?.name}</td>
                 <td style={{ padding: '0.5rem' }}>{a.status}</td>

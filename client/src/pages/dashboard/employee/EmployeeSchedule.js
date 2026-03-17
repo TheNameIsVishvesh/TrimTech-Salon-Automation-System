@@ -7,8 +7,9 @@ export default function EmployeeSchedule() {
   const [appointments, setAppointments] = useState([]);
   const [view, setView] = useState('day'); // day | week
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [status, setStatus] = useState('');
+  const [employeeStatus, setEmployeeStatus] = useState('');
   const [updating, setUpdating] = useState(false);
+  const [filterStatus, setFilterStatus] = useState('all');
 
   useSocket('appointment-update', () => fetchAppointments());
 
@@ -23,20 +24,40 @@ export default function EmployeeSchedule() {
   }, [date, view]);
 
   useEffect(() => {
-    api.get('/api/auth/me').then(res => setStatus(res.data.status || 'available'));
+    api.get('/api/auth/me').then(res => setEmployeeStatus(res.data.status || 'available'));
   }, []);
 
   const updateStatus = async (newStatus) => {
     setUpdating(true);
     try {
       await api.patch('/api/auth/me', { status: newStatus });
-      setStatus(newStatus);
+      setEmployeeStatus(newStatus);
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to update status');
     } finally {
       setUpdating(false);
     }
   };
+
+  const updateAppointmentStatus = async (id, newStatus) => {
+    try {
+      await api.patch(`/api/appointments/${id}`, { status: newStatus });
+      fetchAppointments();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update appointment status');
+    }
+  };
+
+  const statusColors = {
+    scheduled: '#f39c12',
+    confirmed: '#3498db',
+    in_progress: '#9b59b6',
+    completed: '#2ecc71',
+    cancelled: '#e74c3c',
+    no_show: '#95a5a6'
+  };
+
+  const formatStatus = (s) => s.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase()).replace('Scheduled', 'Pending');
 
   return (
     <>
@@ -49,28 +70,60 @@ export default function EmployeeSchedule() {
           <option value="week">Weekly</option>
         </select>
         <input type="date" value={date} onChange={e => setDate(e.target.value)} style={{ padding: '0.5rem' }} />
+        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="form-group" style={{ width: 'auto', padding: '0.5rem' }}>
+          <option value="all">All Statuses</option>
+          <option value="scheduled">Pending</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="in_progress">In Progress</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
         <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          Status:
+          My Status:
           {['available', 'busy', 'on_leave'].map(s => (
-            <button key={s} className={`btn ${status === s ? 'btn-primary' : 'btn-outline'}`} style={{ fontSize: '0.85rem' }} disabled={updating} onClick={() => updateStatus(s)}>{s}</button>
+            <button key={s} className={`btn ${employeeStatus === s ? 'btn-primary' : 'btn-outline'}`} style={{ fontSize: '0.85rem' }} disabled={updating} onClick={() => updateStatus(s)}>{s}</button>
           ))}
         </span>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-        {appointments.length === 0 && <p style={{ color: 'var(--text-secondary)' }}>No appointments in this period.</p>}
-        {appointments.map(apt => (
-          <div key={apt._id} className="card">
-            <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap' }}>
-              <div>
-                <strong>{apt.serviceId?.name}</strong> · {formatDate(apt.date)} {formatTime12h(apt.slotStart)}
-                <br />
-                <small style={{ color: 'var(--text-secondary)' }}>{apt.clientId?.name} · {apt.clientId?.phone} · {apt.status}</small>
+        {appointments.filter(a => filterStatus === 'all' || a.status === filterStatus).length === 0 && <p style={{ color: 'var(--text-secondary)' }}>No appointments in this period.</p>}
+        {appointments
+          .filter(a => filterStatus === 'all' || a.status === filterStatus)
+          .map(apt => (
+            <div key={apt._id} className="card">
+              <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+                <div>
+                  <strong>{apt.serviceId?.name}</strong> · {formatDate(apt.date)} {formatTime12h(apt.startTime)}
+                  <br />
+                  <small style={{ color: 'var(--text-secondary)' }}>{apt.clientId?.name} · {apt.clientId?.phone}</small>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                  <span style={{
+                    backgroundColor: statusColors[apt.status] || '#ccc',
+                    color: '#fff',
+                    padding: '0.25rem 0.6rem',
+                    borderRadius: '12px',
+                    fontSize: '0.85rem',
+                    fontWeight: 'bold'
+                  }}>
+                    {formatStatus(apt.status)}
+                  </span>
+                  <select
+                    value={apt.status}
+                    onChange={(e) => updateAppointmentStatus(apt._id, e.target.value)}
+                    style={{ padding: '0.4rem', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-primary)' }}
+                  >
+                    <option value="scheduled">Pending</option>
+                    <option value="confirmed">Confirmed</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                </div>
               </div>
-              <span style={{ color: 'var(--accent)', fontWeight: 600 }}>{apt.status}</span>
             </div>
-          </div>
-        ))}
+          ))}
       </div>
     </>
   );

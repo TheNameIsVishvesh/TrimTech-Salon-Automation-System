@@ -24,8 +24,9 @@ export default function DashboardLayout() {
     { to: `${base}/owner/slots`, label: 'Time Slots' },
     { to: `${base}/owner/staff`, label: 'Staff' },
     { to: `${base}/owner/inventory`, label: 'Inventory' },
-    { to: `${base}/owner/reports`, label: 'Reports' },
-    { to: `${base}/owner/database`, label: 'Database' }
+    { to: `${base}/owner/reports`, label: 'Advanced Analytics' },
+    { to: `${base}/owner/database`, label: 'Database' },
+    { to: `${base}/owner/leaves`, label: 'Leaves' }
   ];
 
   return (

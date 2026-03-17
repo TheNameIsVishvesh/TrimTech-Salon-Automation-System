@@ -49,7 +49,7 @@ export default function ClientAppointments() {
           <div key={apt._id} className="card">
             <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
               <div>
-                <strong>{apt.serviceId?.name}</strong> · {formatDate(apt.date)} {formatTime12h(apt.slotStart)}
+                <strong>{apt.serviceId?.name}</strong> · {formatDate(apt.date)} {formatTime12h(apt.startTime)}
                 <br />
                 <small style={{ color: 'var(--text-secondary)' }}>with {apt.employeeId?.name} · Invoice {apt.invoiceNumber} · {apt.status}</small>
               </div>
@@ -64,7 +64,7 @@ export default function ClientAppointments() {
                     <div className="form-group">
                       <label>Rating (1-5)</label>
                       <select value={rating} onChange={e => setRating(Number(e.target.value))}>
-                        {[1,2,3,4,5].map(n => <option key={n} value={n}>{n} star{n > 1 ? 's' : ''}</option>)}
+                        {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n} star{n > 1 ? 's' : ''}</option>)}
                       </select>
                     </div>
                     <div className="form-group">

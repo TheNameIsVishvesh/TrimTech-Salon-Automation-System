@@ -33,7 +33,7 @@ exports.getAll = async (req, res) => {
       .populate('clientId', 'name email phone')
       .populate('employeeId', 'name email employeeId status')
       .populate('serviceId', 'name category duration price')
-      .sort({ date: 1, slotStart: 1 });
+      .sort({ date: 1, startTime: 1 });
     res.json(appointments);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -62,13 +62,51 @@ exports.getById = async (req, res) => {
 // POST – Create appointment (client books)
 exports.create = async (req, res) => {
   try {
-    const { employeeId, serviceId, date, slotStart, slotEnd } = req.body;
+    const { employeeId, serviceId, date, startTime, paymentMethod } = req.body;
     const service = await Service.findById(serviceId);
     if (!service) return res.status(404).json({ message: 'Service not found' });
+    const duration = service.duration || 30;
+
+    // Parse startTime to minutes
+    const [h, m] = startTime.split(':').map(Number);
+    const newStartMins = h * 60 + m;
+    const newEndMins = newStartMins + duration;
+
+    // Calculate endTime
+    const endH = Math.floor(newEndMins / 60).toString().padStart(2, '0');
+    const endM = (newEndMins % 60).toString().padStart(2, '0');
+    const endTime = `${endH}:${endM}`;
+
+    // Overlap validation
+    const startOfDay = new Date(date);
+    const endOfDay = new Date(startOfDay);
+    endOfDay.setDate(endOfDay.getDate() + 1);
+
+    const existingAppointments = await Appointment.find({
+      employeeId,
+      date: { $gte: startOfDay, $lt: endOfDay },
+      status: { $nin: ['cancelled'] }
+    });
+
+    for (let apt of existingAppointments) {
+      if (!apt.startTime || !apt.endTime) continue;
+      const [exH, exM] = apt.startTime.split(':').map(Number);
+      const exStartMins = exH * 60 + exM;
+
+      const [eyH, eyM] = apt.endTime.split(':').map(Number);
+      const exEndMins = eyH * 60 + eyM;
+
+      if (newStartMins < exEndMins && newEndMins > exStartMins) {
+        return res.status(400).json({ message: 'This employee is already booked during the selected time slot.' });
+      }
+    }
+
     const amount = service.price;
     const gstPercent = 18;
     const gstAmount = Math.round(amount * (gstPercent / 100));
-    const totalAmount = amount + gstAmount;
+    const discount = 0; // Hardcoded or from request
+    const convenienceFee = paymentMethod === 'Card' ? 50 : 0;
+    const totalAmount = amount + gstAmount + convenienceFee - discount;
     const invoiceNumber = await nextInvoiceNumber();
 
     const appointment = await Appointment.create({
@@ -76,14 +114,18 @@ exports.create = async (req, res) => {
       employeeId,
       serviceId,
       date: new Date(date),
-      slotStart,
-      slotEnd,
+      startTime,
+      endTime,
+      duration,
       amount,
       gstPercent,
       gstAmount,
+      discount,
+      convenienceFee,
       totalAmount,
       invoiceNumber,
-      paymentStatus: 'paid'
+      paymentMethod: paymentMethod || 'Cash',
+      paymentStatus: paymentMethod === 'Cash' ? 'pending' : 'paid'
     });
 
     const populated = await Appointment.findById(appointment._id)
@@ -104,9 +146,28 @@ exports.update = async (req, res) => {
     const apt = await Appointment.findById(req.params.id);
     if (!apt) return res.status(404).json({ message: 'Appointment not found' });
 
-    const allowed = ['status', 'date', 'slotStart', 'slotEnd', 'rating', 'feedback'];
+    const allowed = ['status', 'date', 'startTime', 'endTime', 'rating', 'feedback'];
     const updates = {};
     Object.keys(req.body).forEach(k => { if (allowed.includes(k)) updates[k] = req.body[k]; });
+
+    // Inventory Deduction Logic
+    if (updates.status === 'completed' && apt.status !== 'completed') {
+      const ServiceConsumable = require('../models/ServiceConsumable');
+      const Inventory = require('../models/Inventory');
+
+      const consumables = await ServiceConsumable.find({ serviceId: apt.serviceId });
+      for (const consumable of consumables) {
+        await Inventory.findByIdAndUpdate(consumable.productId, {
+          $inc: { totalStock: -consumable.quantityUsed }
+        });
+
+        // Optionally check low stock and emit socket event
+        const inv = await Inventory.findById(consumable.productId);
+        if (inv && inv.totalStock <= inv.lowStockThreshold) {
+          emitAppointmentUpdate({ type: 'inventory_alert', inventory: inv });
+        }
+      }
+    }
 
     const updated = await Appointment.findByIdAndUpdate(req.params.id, updates, { new: true })
       .populate('clientId', 'name email phone')
@@ -123,19 +184,64 @@ exports.update = async (req, res) => {
 // GET available slots for a date + employee
 exports.getAvailableSlots = async (req, res) => {
   try {
-    const { date, employeeId } = req.query;
+    const { date, employeeId, serviceId } = req.query;
     if (!date || !employeeId) return res.status(400).json({ message: 'date and employeeId required' });
-    const TimeSlot = require('../models/TimeSlot');
-    const slots = await TimeSlot.find({ isActive: true }).sort({ startTime: 1 });
+
+    const Service = require('../models/Service');
+    let serviceDuration = 30; // Default
+    if (serviceId) {
+      const service = await Service.findById(serviceId);
+      if (service) serviceDuration = service.duration;
+    }
+
+    // Check for approved leaves
+    const Leave = require('../models/Leave');
+    const startOfDay = new Date(date);
+    const endOfDay = new Date(startOfDay);
+    endOfDay.setDate(endOfDay.getDate() + 1);
+
+    const leaves = await Leave.find({
+      employeeId,
+      status: 'approved',
+      startDate: { $lt: endOfDay },
+      endDate: { $gte: startOfDay }
+    });
+    if (leaves.length > 0) {
+      return res.json([]); // Return empty slots if employee is on approved leave
+    }
+
     const booked = await Appointment.find({
       employeeId,
-      date: { $gte: new Date(date), $lt: new Date(new Date(date).setDate(new Date(date).getDate() + 1)) },
+      date: { $gte: startOfDay, $lt: endOfDay },
       status: { $nin: ['cancelled'] }
-    }).select('slotStart slotEnd');
+    }).select('startTime endTime');
 
-    const bookedSet = new Set(booked.map(b => `${b.slotStart}-${b.slotEnd}`));
-    const available = slots.filter(s => !bookedSet.has(`${s.startTime}-${s.endTime}`));
-    res.json(available);
+    const bookedIntervals = booked.map(b => {
+      const [sh, sm] = (b.startTime || '00:00').split(':').map(Number);
+      const [eh, em] = (b.endTime || '00:00').split(':').map(Number);
+      return { start: sh * 60 + sm, end: eh * 60 + em };
+    });
+
+    const workStart = 9 * 60; // 09:00
+    const workEnd = 18 * 60; // 18:00
+    const interval = 30; // 30 min intervals
+
+    const availableSlots = [];
+    for (let time = workStart; time + serviceDuration <= workEnd; time += interval) {
+      const newStart = time;
+      const newEnd = time + serviceDuration;
+
+      const isOverlap = bookedIntervals.some(b => newStart < b.end && newEnd > b.start);
+      if (!isOverlap) {
+        const h = Math.floor(newStart / 60).toString().padStart(2, '0');
+        const m = (newStart % 60).toString().padStart(2, '0');
+        const eh = Math.floor(newEnd / 60).toString().padStart(2, '0');
+        const em = (newEnd % 60).toString().padStart(2, '0');
+        availableSlots.push({ _id: `${h}:${m}`, startTime: `${h}:${m}`, endTime: `${eh}:${em}` });
+      }
+    }
+
+    res.json(availableSlots);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

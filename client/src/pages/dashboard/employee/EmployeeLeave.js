@@ -50,7 +50,25 @@ export default function EmployeeLeave() {
         {leaves.length === 0 && <p style={{ color: 'var(--text-secondary)' }}>No leave requests.</p>}
         {leaves.map(l => (
           <div key={l._id} className="card">
-            {formatDate(l.startDate)} – {formatDate(l.endDate)} · {l.reason || '-'} · <strong>{l.status}</strong>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <strong>{formatDate(l.startDate)} – {formatDate(l.endDate)}</strong>
+                <br />
+                <small style={{ color: 'var(--text-secondary)' }}>Reason: {l.reason || 'None'}</small>
+                {l.ownerComment && (
+                  <div><small style={{ color: 'var(--text-secondary)' }}><b>Owner comment:</b> {l.ownerComment}</small></div>
+                )}
+              </div>
+              <span style={{
+                color: l.status === 'approved' ? 'var(--success)' : l.status === 'rejected' ? 'var(--error)' : 'var(--warning)',
+                fontWeight: 'bold',
+                padding: '0.4rem 0.8rem',
+                borderRadius: '8px',
+                background: 'var(--bg-default)'
+              }}>
+                {l.status.charAt(0).toUpperCase() + l.status.slice(1)}
+              </span>
+            </div>
           </div>
         ))}
       </div>

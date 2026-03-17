@@ -7,6 +7,7 @@ import OwnerStaff from './owner/OwnerStaff';
 import OwnerInventory from './owner/OwnerInventory';
 import OwnerReports from './owner/OwnerReports';
 import OwnerDatabase from './owner/OwnerDatabase';
+import OwnerLeaves from './owner/OwnerLeaves';
 
 export default function OwnerDashboard() {
   return (
@@ -19,6 +20,7 @@ export default function OwnerDashboard() {
         <Route path="inventory" element={<OwnerInventory />} />
         <Route path="reports" element={<OwnerReports />} />
         <Route path="database" element={<OwnerDatabase />} />
+        <Route path="leaves" element={<OwnerLeaves />} />
       </Routes>
     </div>
   );

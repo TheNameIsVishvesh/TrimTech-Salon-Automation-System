@@ -8,6 +8,8 @@ const User = require('../models/User');
 const Service = require('../models/Service');
 const Product = require('../models/Product');
 const TimeSlot = require('../models/TimeSlot');
+const Inventory = require('../models/Inventory');
+const ServiceConsumable = require('../models/ServiceConsumable');
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/trimtech';
 
@@ -68,6 +70,32 @@ async function seed() {
   await TimeSlot.deleteMany({});
   await TimeSlot.insertMany(timeSlots);
   console.log('Time slots seeded');
+
+  await Inventory.deleteMany({});
+  const inventoryItems = await Inventory.insertMany([
+    { productName: 'Premium Shampoo', category: 'Hair Care', totalStock: 5000, unit: 'ml', lowStockThreshold: 500 },
+    { productName: 'Hair Color Tube (Black)', category: 'Hair Care', totalStock: 2000, unit: 'ml', lowStockThreshold: 200 },
+    { productName: 'Aroma Massage Oil', category: 'Spa Supplies', totalStock: 3000, unit: 'ml', lowStockThreshold: 300 },
+    { productName: 'Herbal Facial Scrub', category: 'Skin Care', totalStock: 1000, unit: 'g', lowStockThreshold: 100 }
+  ]);
+  console.log('Inventory items seeded');
+
+  const shampoo = inventoryItems.find(i => i.productName === 'Premium Shampoo');
+  const colorTube = inventoryItems.find(i => i.productName === 'Hair Color Tube (Black)');
+  const massageOil = inventoryItems.find(i => i.productName === 'Aroma Massage Oil');
+  const facialScrub = inventoryItems.find(i => i.productName === 'Herbal Facial Scrub');
+
+  const servicesMap = await Service.find();
+  const getSvc = name => servicesMap.find(s => s.name === name);
+
+  await ServiceConsumable.deleteMany({});
+  await ServiceConsumable.insertMany([
+    { serviceId: getSvc('Haircut')._id, productId: shampoo._id, quantityUsed: 20 },
+    { serviceId: getSvc('Hair Color')._id, productId: colorTube._id, quantityUsed: 50 },
+    { serviceId: getSvc('Body Massage')._id, productId: massageOil._id, quantityUsed: 30 },
+    { serviceId: getSvc('Basic Facial')._id, productId: facialScrub._id, quantityUsed: 15 }
+  ]);
+  console.log('Service Consumables linked successfully');
 
   const existingOwner = await User.findOne({ email: 'owner@trimtech.com' });
   if (!existingOwner) {

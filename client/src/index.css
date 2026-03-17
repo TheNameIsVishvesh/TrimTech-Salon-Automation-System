@@ -57,11 +57,21 @@ button {
   font-family: inherit;
   cursor: pointer;
   border: none;
-  transition: background-color var(--transition), transform 0.1s;
+  color: inherit;
+  transition: background-color var(--transition), transform 0.1s, color var(--transition);
 }
 button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+select {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+select option {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 /* Indian currency */

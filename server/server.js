@@ -39,6 +39,8 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/time-slots', timeSlotRoutes);
 app.use('/api/leaves', leaveRoutes);
+app.use('/api/inventory', require('./routes/inventory'));
+app.use('/api/analytics', require('./routes/analytics'));
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok', message: 'TrimTech API' }));
 

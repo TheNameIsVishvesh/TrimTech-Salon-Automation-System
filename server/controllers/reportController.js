@@ -72,7 +72,7 @@ exports.peakHours = async (req, res) => {
   try {
     const data = await Appointment.aggregate([
       { $match: { status: { $nin: ['cancelled'] } } },
-      { $group: { _id: '$slotStart', count: { $sum: 1 } } },
+      { $group: { _id: '$startTime', count: { $sum: 1 } } },
       { $sort: { count: -1 } },
       { $limit: 10 }
     ]);
@@ -92,8 +92,8 @@ exports.timePrediction = async (req, res) => {
       employeeId,
       date: new Date(date),
       status: { $nin: ['cancelled'] }
-    }).select('slotStart slotEnd');
-    const bookedSet = new Set(booked.map(b => `${b.slotStart}-${b.slotEnd}`));
+    }).select('startTime endTime');
+    const bookedSet = new Set(booked.map(b => `${b.startTime}-${b.endTime}`));
     const firstAvailable = slots.find(s => !bookedSet.has(`${s.startTime}-${s.endTime}`));
     res.json({ suggestedSlot: firstAvailable || null });
   } catch (err) {
