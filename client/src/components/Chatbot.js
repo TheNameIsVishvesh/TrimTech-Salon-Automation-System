@@ -3,34 +3,58 @@
  * Mock / rule-based acceptable for the requirement
  */
 import React, { useState, useRef, useEffect } from 'react';
-
-const FAQ = [
-  { q: ['book', 'appointment', 'how to book'], a: 'To book an appointment, please log in or register, then go to Dashboard > Book. Choose category, service, employee, date and time slot.' },
-  { q: ['price', 'cost', 'charges', 'fee'], a: 'Prices vary by service. Check the Services page for each service with duration and price in ₹.' },
-  { q: ['cancel', 'reschedule'], a: 'In your dashboard under Appointments, you can cancel or request to reschedule an appointment.' },
-  { q: ['timing', 'hours', 'open'], a: 'We follow the time slots set by the salon. Check available slots when booking.' },
-  { q: ['contact', 'address', 'phone'], a: 'Visit the Contact page for our address, phone and email. You can also send a message via the contact form.' },
-  { q: ['service', 'hair', 'facial', 'beard', 'spa', 'bridal', 'skin'], a: 'We offer Hair, Beard, Facial, Spa, Bridal and Skin Care services. See the Services page for the full list.' }
-];
-
-function getAnswer(text) {
-  const lower = (text || '').toLowerCase().trim();
-  if (!lower) return 'Type a question (e.g. How do I book? What are your timings?)';
-  for (const faq of FAQ) {
-    if (faq.q.some(kw => lower.includes(kw))) return faq.a;
-  }
-  return 'Sorry, I could not find an answer. Try asking about booking, prices, cancellation, timings, or contact details.';
-}
+import api from '../api';
+import { useNavigate } from 'react-router-dom';
 
 export default function Chatbot() {
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState([{ from: 'bot', text: 'Hi! I\'m TrimTech assistant. Ask me about booking, services, prices or contact.' }]);
+  const [messages, setMessages] = useState([{ from: 'bot', text: 'Hi! I\'m TrimTech assistant. Ask me about services, prices or duration 😊' }]);
   const [input, setInput] = useState('');
+  const [services, setServices] = useState([]);
   const bottomRef = useRef(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    api.get('/api/services').then(res => setServices(res.data)).catch(console.error);
+  }, []);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  const getAnswer = (text) => {
+    const lower = text.toLowerCase().trim();
+    if (!lower) return;
+    
+    if (['hi', 'hello', 'hey', 'hii'].includes(lower)) {
+      return "Hi! I'm TrimTech assistant. Ask me about services, prices or duration 😊";
+    }
+
+    const isAskingPrice = lower.includes('price') || lower.includes('cost') || lower.includes('charges');
+    const isAskingDuration = lower.includes('duration') || lower.includes('time') || lower.includes('how long');
+
+    const pureMatch = services.find(s => lower.includes(s.name.toLowerCase()));
+    let matchedService = pureMatch;
+
+    if (!matchedService) {
+      const searchTerms = lower.replace(/(price|cost|charges|duration|time|how long|of|for|what|is|the|tell|me)/g, '').trim();
+      if (searchTerms) {
+        matchedService = services.find(s => s.name.toLowerCase().includes(searchTerms) || searchTerms.includes(s.name.toLowerCase()));
+      }
+    }
+
+    if (matchedService) {
+      if (isAskingPrice && !isAskingDuration) {
+        return `${matchedService.name} costs ₹${matchedService.price}`;
+      } else if (isAskingDuration && !isAskingPrice) {
+        return `${matchedService.name} takes ${matchedService.duration} minutes`;
+      } else {
+        return `${matchedService.name} costs ₹${matchedService.price} and takes ${matchedService.duration} minutes`;
+      }
+    }
+
+    return "Sorry, I couldn't understand. Try asking about service price or duration.";
+  };
 
   const handleSend = () => {
     if (!input.trim()) return;
@@ -38,15 +62,32 @@ export default function Chatbot() {
     setMessages(m => [...m, userMsg]);
     setInput('');
     const reply = getAnswer(userMsg.text);
-    setTimeout(() => setMessages(m => [...m, { from: 'bot', text: reply }]), 400);
+    if (reply) {
+      setTimeout(() => setMessages(m => [...m, { from: 'bot', text: reply }]), 400);
+    }
+  };
+
+  const handleActionClick = (action) => {
+    if (action === 'Book Appointment') {
+      navigate('/dashboard/client');
+      setOpen(false);
+    } else if (action === 'Show Services') {
+      const msg = { from: 'user', text: 'Show Services' };
+      setMessages(m => [...m, msg]);
+      setTimeout(() => setMessages(m => [...m, { from: 'bot', text: 'We have a wide range of services including Haircuts, Facials, Beards and more. Just ask me the price or duration of any service!' }]), 400);
+    } else if (action === 'Check Prices') {
+      const msg = { from: 'user', text: 'Check Prices' };
+      setMessages(m => [...m, msg]);
+       setTimeout(() => setMessages(m => [...m, { from: 'bot', text: 'Tell me which service you are looking for?' }]), 400);
+    }
   };
 
   return (
     <div style={{ position: 'fixed', bottom: '1.5rem', right: '1.5rem', zIndex: 999 }}>
       {open && (
-        <div className="card" style={{ width: '320px', maxWidth: '95vw', height: '380px', display: 'flex', flexDirection: 'column', padding: 0 }}>
+        <div className="card" style={{ width: '320px', maxWidth: '95vw', height: '420px', display: 'flex', flexDirection: 'column', padding: 0 }}>
           <div style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <strong>TrimTech FAQ</strong>
+            <strong>TrimTech Smart Assistant</strong>
             <button onClick={() => setOpen(false)} style={{ background: 'none', fontSize: '1.2rem' }} aria-label="Close">×</button>
           </div>
           <div style={{ flex: 1, overflow: 'auto', padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -57,12 +98,19 @@ export default function Chatbot() {
             ))}
             <div ref={bottomRef} />
           </div>
+
+          <div style={{ padding: '0.5rem', display: 'flex', gap: '0.2rem', overflowX: 'auto', borderTop: '1px solid var(--border)', background: 'var(--bg-card)' }}>
+             <button className="btn btn-outline" style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', whiteSpace: 'nowrap' }} onClick={() => handleActionClick('Show Services')}>Show Services</button>
+             <button className="btn btn-outline" style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', whiteSpace: 'nowrap' }} onClick={() => handleActionClick('Check Prices')}>Check Prices</button>
+             <button className="btn btn-outline" style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', whiteSpace: 'nowrap' }} onClick={() => handleActionClick('Book Appointment')}>Book Appointment</button>
+          </div>
+
           <div style={{ padding: '0.5rem', borderTop: '1px solid var(--border)', display: 'flex', gap: '0.5rem' }}>
             <input
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleSend()}
-              placeholder="Ask something..."
+              placeholder="Ask me something..."
               style={{ flex: 1, padding: '0.5rem', border: '1px solid var(--border)', borderRadius: '8px', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}
             />
             <button className="btn btn-primary" onClick={handleSend}>Send</button>
@@ -72,10 +120,10 @@ export default function Chatbot() {
       <button
         onClick={() => setOpen(!open)}
         className="btn btn-primary"
-        style={{ width: '56px', height: '56px', borderRadius: '50%', padding: 0, boxShadow: '0 4px 12px var(--shadow)' }}
+        style={{ width: '56px', height: '56px', borderRadius: '50%', padding: 0, boxShadow: '0 4px 12px var(--shadow)', fontSize: '1.5rem' }}
         title="FAQ Chatbot"
       >
-        💬
+        🤖
       </button>
     </div>
   );

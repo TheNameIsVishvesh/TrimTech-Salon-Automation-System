@@ -17,6 +17,12 @@ const appointmentSchema = new mongoose.Schema({
     enum: ['scheduled', 'confirmed', 'in_progress', 'completed', 'cancelled', 'no_show'],
     default: 'scheduled'
   },
+  products: [{
+    productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
+    name: String,
+    price: Number,
+    quantity: Number
+  }],
   // Payment (simulated)
   amount: { type: Number, required: true, min: 0 },
   gstPercent: { type: Number, default: 18 },
@@ -27,9 +33,11 @@ const appointmentSchema = new mongoose.Schema({
   convenienceFee: { type: Number, default: 0 },
   discount: { type: Number, default: 0 },
   invoiceNumber: { type: String, unique: true, sparse: true },
+  invoicePath: { type: String },
   // Feedback
   rating: { type: Number, min: 1, max: 5 },
-  feedback: { type: String, trim: true }
+  feedback: { type: String, trim: true },
+  isRated: { type: Boolean, default: false }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Appointment', appointmentSchema);

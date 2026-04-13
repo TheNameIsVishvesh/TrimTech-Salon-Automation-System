@@ -16,7 +16,9 @@ const userSchema = new mongoose.Schema({
   assignedServiceIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Service' }],
   status: { type: String, enum: ['available', 'busy', 'on_leave', 'off'], default: 'available' },
   // Client-specific (optional)
-  address: { type: String, trim: true }
+  address: { type: String, trim: true },
+  resetPasswordToken: String,
+  resetPasswordExpire: Date
 }, { timestamps: true });
 
 userSchema.pre('save', async function (next) {

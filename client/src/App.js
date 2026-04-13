@@ -14,11 +14,14 @@ import About from './pages/About';
 import Contact from './pages/Contact';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 
 // Dashboards
 import ClientDashboard from './pages/dashboard/ClientDashboard';
 import EmployeeDashboard from './pages/dashboard/EmployeeDashboard';
 import OwnerDashboard from './pages/dashboard/OwnerDashboard';
+import Feedback from './pages/Feedback';
 
 function PrivateRoute({ children, allowedRoles }) {
   const { user, loading } = useAuth();
@@ -39,6 +42,8 @@ function App() {
         <Route path="contact" element={<Contact />} />
         <Route path="login" element={<Login />} />
         <Route path="register" element={<Register />} />
+        <Route path="forgot-password" element={<ForgotPassword />} />
+        <Route path="reset-password/:token" element={<ResetPassword />} />
       </Route>
 
       <Route path="/dashboard" element={
@@ -49,6 +54,10 @@ function App() {
         <Route path="owner/*" element={<PrivateRoute allowedRoles={['owner']}><OwnerDashboard /></PrivateRoute>} />
         <Route index element={<Navigate to="/dashboard/redirect" replace />} />
       </Route>
+
+      <Route path="/feedback/:appointmentId" element={
+        <PrivateRoute allowedRoles={['client']}><Feedback /></PrivateRoute>
+      } />
 
       <Route path="/dashboard/redirect" element={<PrivateRoute><DashboardRedirect /></PrivateRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />

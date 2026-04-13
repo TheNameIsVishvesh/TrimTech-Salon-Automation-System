@@ -18,8 +18,30 @@ export default function Products() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1.25rem' }}>
         {products.map(p => (
           <div key={p._id} className="card">
-            <div style={{ height: '120px', background: 'var(--bg-primary)', borderRadius: '8px', marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>
-              {p.image ? <img src={p.image} alt={p.name} style={{ maxHeight: '100%', objectFit: 'cover' }} /> : '📦'}
+            <div style={{ height: '180px', background: 'var(--bg-primary)', borderRadius: '8px', marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+              <img 
+                src={p.imageUrl || `/images/products/${encodeURIComponent(p.name + ' Image.jpg')}`} 
+                onError={(e) => { 
+                  if (!e.target.dataset.fallback) {
+                    e.target.dataset.fallback = 'jpg';
+                    // If p.imageUrl failed, try the regular .jpg first
+                    e.target.src = `/images/products/${encodeURIComponent(p.name + ' Image.jpg')}`;
+                  } else if (e.target.dataset.fallback === 'jpg') {
+                    e.target.dataset.fallback = 'png';
+                    e.target.src = `/images/products/${encodeURIComponent(p.name + ' Image.png')}`;
+                  } else if (e.target.dataset.fallback === 'png') {
+                    e.target.dataset.fallback = 'category';
+                    e.target.src = `/images/products/${encodeURIComponent(p.category.toLowerCase().replace(' ', '-') + '.jpg')}`;
+                  } else if (e.target.dataset.fallback === 'category') {
+                    e.target.dataset.fallback = 'default';
+                    e.target.src = '/images/default-product.png'; 
+                  } else {
+                    e.target.onError = null;
+                  }
+                }}
+                alt={p.name} 
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+              />
             </div>
             <span style={{ fontSize: '0.85rem', color: 'var(--accent)' }}>{p.category}</span>
             <h3 style={{ margin: '0.35rem 0', fontSize: '1.1rem' }}>{p.name}</h3>

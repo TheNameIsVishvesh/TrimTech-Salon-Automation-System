@@ -31,11 +31,28 @@ export default function ClientAppointments() {
 
   const handleFeedback = async (id) => {
     try {
-      await api.patch(`/api/appointments/${id}`, { rating, feedback });
+      await api.post(`/api/feedback/${id}`, { rating, feedback });
       setEditingFeedback(null);
       fetchAppointments();
     } catch (err) {
       alert(err.response?.data?.message || 'Failed');
+    }
+  };
+
+  const downloadInvoice = async (id) => {
+    try {
+      // Fetch as a blob
+      const response = await api.get(`/api/invoice/${id}`, { responseType: 'blob' });
+      // Create a URL for the blob
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Invoice_${id}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+    } catch (err) {
+      alert('Failed to download invoice. ' + (err.response?.data?.message || ''));
     }
   };
 
@@ -55,20 +72,30 @@ export default function ClientAppointments() {
               </div>
               <span>{formatCurrency(apt.totalAmount)}</span>
             </div>
-            {apt.status === 'completed' && !apt.rating && (
+            {apt.status === 'completed' && apt.invoicePath && (
+              <button 
+                className="btn btn-outline" 
+                style={{ marginTop: '0.75rem', fontSize: '0.9rem', marginRight: '0.5rem' }} 
+                onClick={() => downloadInvoice(apt._id)}
+              >
+                Download Invoice
+              </button>
+            )}
+            
+            {apt.status === 'completed' && !apt.isRated && (
               <div style={{ marginTop: '1rem' }}>
                 {editingFeedback !== apt._id ? (
                   <button className="btn btn-outline" style={{ fontSize: '0.9rem' }} onClick={() => setEditingFeedback(apt._id)}>Add rating & feedback</button>
                 ) : (
                   <div>
                     <div className="form-group">
-                      <label>Rating (1-5)</label>
+                      <label>Rating (⭐ 1-5)</label>
                       <select value={rating} onChange={e => setRating(Number(e.target.value))}>
-                        {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n} star{n > 1 ? 's' : ''}</option>)}
+                        {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n} ⭐</option>)}
                       </select>
                     </div>
                     <div className="form-group">
-                      <label>Feedback</label>
+                      <label>📝 Feedback</label>
                       <textarea value={feedback} onChange={e => setFeedback(e.target.value)} rows={2} />
                     </div>
                     <button className="btn btn-primary" onClick={() => handleFeedback(apt._id)}>Submit</button>
@@ -77,6 +104,13 @@ export default function ClientAppointments() {
                 )}
               </div>
             )}
+            
+            {apt.status === 'completed' && apt.isRated && (
+              <div style={{ marginTop: '1rem', color: 'var(--primary)', fontWeight: 'bold' }}>
+                ✓ Feedback Submitted
+              </div>
+            )}
+
             {apt.status === 'scheduled' || apt.status === 'confirmed' ? (
               <button className="btn btn-outline" style={{ marginTop: '0.75rem', fontSize: '0.9rem' }} onClick={() => handleCancel(apt._id)}>Cancel appointment</button>
             ) : null}

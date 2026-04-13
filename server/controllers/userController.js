@@ -42,7 +42,7 @@ exports.createEmployee = async (req, res) => {
     const user = await User.create({
       name,
       email,
-      password: password || 'trimtech123',
+      password: password || 'emp123',
       role: 'employee',
       phone,
       employeeId,

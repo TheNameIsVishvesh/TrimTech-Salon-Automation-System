@@ -20,4 +20,12 @@ router.post('/login', [
 router.get('/me', protect, getMe);
 router.patch('/me', protect, updateMe);
 
+router.post('/forgot-password', [
+  body('email').isEmail()
+], require('../controllers/authController').forgotPassword);
+
+router.post('/reset-password/:token', [
+  body('password').isLength({ min: 6 })
+], require('../controllers/authController').resetPassword);
+
 module.exports = router;

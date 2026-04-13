@@ -5,6 +5,9 @@ const Appointment = require('../models/Appointment');
 const User = require('../models/User');
 const Service = require('../models/Service');
 const { emitAppointmentUpdate } = require('../config/socket');
+const { sendBookingEmail, sendInvoiceEmail } = require('../utils/emailService');
+const { generateInvoicePDF } = require('../utils/pdfService');
+const { createNotification } = require('./notificationController');
 
 // Generate invoice number
 const nextInvoiceNumber = async () => {
@@ -62,7 +65,7 @@ exports.getById = async (req, res) => {
 // POST – Create appointment (client books)
 exports.create = async (req, res) => {
   try {
-    const { employeeId, serviceId, date, startTime, paymentMethod } = req.body;
+    const { employeeId, serviceId, date, startTime, paymentMethod, products } = req.body;
     const service = await Service.findById(serviceId);
     if (!service) return res.status(404).json({ message: 'Service not found' });
     const duration = service.duration || 30;
@@ -103,16 +106,27 @@ exports.create = async (req, res) => {
 
     const amount = service.price;
     const gstPercent = 18;
-    const gstAmount = Math.round(amount * (gstPercent / 100));
+    let productsAmount = 0;
+    let productsList = [];
+    if (products && Array.isArray(products) && products.length > 0) {
+      productsList = products.map(p => ({
+        ...p,
+        price: Number(p.price) || 0,
+        quantity: Number(p.quantity) || 1
+      }));
+      productsAmount = productsList.reduce((acc, p) => acc + (p.price * p.quantity), 0);
+    }
+    const gstAmount = Math.round((amount + productsAmount) * (gstPercent / 100));
     const discount = 0; // Hardcoded or from request
     const convenienceFee = paymentMethod === 'Card' ? 50 : 0;
-    const totalAmount = amount + gstAmount + convenienceFee - discount;
+    const totalAmount = amount + productsAmount + gstAmount + convenienceFee - discount;
     const invoiceNumber = await nextInvoiceNumber();
 
     const appointment = await Appointment.create({
       clientId: req.user._id,
       employeeId,
       serviceId,
+      products: productsList,
       date: new Date(date),
       startTime,
       endTime,
@@ -134,6 +148,38 @@ exports.create = async (req, res) => {
       .populate('serviceId', 'name category duration price');
 
     emitAppointmentUpdate({ type: 'created', appointment: populated });
+
+    // --- NOTIFICATIONS ---
+    // Notify employee
+    createNotification(employeeId, `New appointment booked for ${new Date(date).toLocaleDateString()} at ${startTime}`, 'booking');
+    
+    // Notify owner (assuming we can find owners, let's just trigger for employee for now, or fetch owners)
+    User.find({ role: 'owner' }).then(owners => {
+      owners.forEach(owner => {
+        createNotification(owner._id, `New appointment booked by ${populated.clientId?.name} with ${populated.employeeId?.name}`, 'booking');
+      });
+    }).catch(err => console.error(err));
+    // -----------------------
+
+    // Background Email Logic (Booking Confirmation Only)
+    (async () => {
+      try {
+        const clientEmail = populated.clientId?.email;
+        if (clientEmail) {
+          const emailData = {
+            serviceName: populated.serviceId?.name || 'Service',
+            date: populated.date,
+            time: populated.startTime,
+            employeeName: populated.employeeId?.name || 'Employee'
+          };
+          
+          await sendBookingEmail(clientEmail, emailData);
+        }
+      } catch (error) {
+        console.error('Error sending booking confirmation email:', error);
+      }
+    })();
+
     res.status(201).json(populated);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -175,6 +221,51 @@ exports.update = async (req, res) => {
       .populate('serviceId', 'name category duration price');
 
     emitAppointmentUpdate({ type: 'updated', appointment: updated });
+
+    // --- NOTIFICATIONS ---
+    if (updates.status === 'completed' && apt.status !== 'completed') {
+      createNotification(updated.clientId._id || updated.clientId, `Your service with ${updated.employeeId?.name} is completed. Please consider leaving a review.`, 'service');
+    } else if (updates.status && updates.status !== apt.status) {
+      if (req.user.role === 'client') {
+         createNotification(updated.employeeId._id || updated.employeeId, `Appointment status updated to ${updates.status} by client.`, 'booking');
+      } else {
+         createNotification(updated.clientId._id || updated.clientId, `Your appointment status was updated to ${updates.status}.`, 'booking');
+      }
+    }
+    // -----------------------
+
+    // Background Email & Invoice Logic for Completed Appointment
+    if (updates.status === 'completed' && apt.status !== 'completed') {
+      (async () => {
+        try {
+          const clientEmail = updated.clientId?.email;
+          if (clientEmail) {
+            const invoiceData = {
+              invoiceNumber: updated.invoiceNumber,
+              date: updated.date,
+              time: updated.startTime,
+              customerName: updated.clientId?.name || 'Customer',
+              employeeName: updated.employeeId?.name || 'Employee',
+              serviceName: updated.serviceId?.name || 'Service',
+              products: updated.products || [],
+              amount: updated.amount,
+              gstAmount: updated.gstAmount,
+              totalAmount: updated.totalAmount
+            };
+
+            const pdfPath = await generateInvoicePDF(invoiceData);
+            
+            // Save invoice path in the database
+            await Appointment.findByIdAndUpdate(updated._id, { invoicePath: pdfPath });
+            
+            await sendInvoiceEmail(clientEmail, pdfPath, updated._id);
+          }
+        } catch (error) {
+          console.error('Error generating/sending completion invoice:', error);
+        }
+      })();
+    }
+
     res.json(updated);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -242,6 +333,70 @@ exports.getAvailableSlots = async (req, res) => {
     }
 
     res.json(availableSlots);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// GET /api/invoice/:appointmentId
+exports.downloadInvoice = async (req, res) => {
+  try {
+    const apt = await Appointment.findById(req.params.appointmentId);
+    if (!apt) return res.status(404).json({ message: 'Appointment not found' });
+    
+    // Allow owner, or employee/client related to the appointment
+    if (req.user.role === 'client' && apt.clientId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+    if (req.user.role === 'employee' && apt.employeeId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    if (!apt.invoicePath) {
+      return res.status(404).json({ message: 'Invoice not generated for this appointment' });
+    }
+
+    const fs = require('fs');
+    if (!fs.existsSync(apt.invoicePath)) {
+      return res.status(404).json({ message: 'Invoice file not found on server' });
+    }
+
+    res.download(apt.invoicePath);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// POST /api/feedback/:appointmentId
+exports.submitFeedback = async (req, res) => {
+  try {
+    const apt = await Appointment.findById(req.params.appointmentId);
+    if (!apt) return res.status(404).json({ message: 'Appointment not found' });
+    
+    // Only client of that appointment can submit feedback
+    if (req.user.role !== 'client' || apt.clientId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Only the client can submit feedback' });
+    }
+
+    if (apt.status !== 'completed') {
+      return res.status(400).json({ message: 'Can only submit feedback for completed appointments' });
+    }
+
+    if (apt.isRated) {
+      return res.status(400).json({ message: 'Feedback already submitted for this appointment' });
+    }
+
+    const { rating, feedback } = req.body;
+    if (!rating || rating < 1 || rating > 5) {
+      return res.status(400).json({ message: 'Invalid rating. Must be between 1 and 5' });
+    }
+
+    apt.rating = rating;
+    apt.feedback = feedback;
+    apt.isRated = true;
+    await apt.save();
+
+    res.json({ message: 'Feedback submitted successfully', appointment: apt });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

@@ -8,6 +8,7 @@ const productSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   category: { type: String, enum: ['Hair care', 'Skin care', 'Grooming'], required: true },
   image: { type: String, default: '' },
+  imageUrl: { type: String, default: '' },
   mrp: { type: Number, required: true, min: 0 }, // ₹
   discount: { type: Number, default: 0, min: 0 }, // ₹ off
   stock: { type: Number, required: true, min: 0, default: 0 },

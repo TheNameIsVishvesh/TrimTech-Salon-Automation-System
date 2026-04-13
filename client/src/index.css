@@ -154,3 +154,64 @@ select option {
 .date-indian {
   font-variant-numeric: tabular-nums;
 }
+
+/* Response Dashboard Layout */
+@media (max-width: 768px) {
+  .dashboard-layout {
+    flex-direction: column !important;
+  }
+  
+  .dashboard-aside {
+    width: 100% !important;
+    min-width: 100% !important;
+    border-right: none !important;
+    border-bottom: 1px solid var(--border) !important;
+    height: auto !important;
+    flex-direction: row !important;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 1rem !important;
+    flex-wrap: wrap;
+  }
+  
+  .dashboard-aside > div:first-child {
+    border-bottom: none !important;
+    padding: 0.5rem 0 !important;
+  }
+  
+  .dashboard-aside nav {
+    display: none;
+    width: 100%;
+    order: 3;
+    padding: 1rem 0 !important;
+  }
+  
+  .dashboard-aside.menu-open nav {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .dashboard-aside .bottom-actions {
+    display: none;
+    width: 100%;
+    order: 4;
+  }
+
+  .dashboard-aside.menu-open .bottom-actions {
+    display: flex;
+    flex-direction: row !important;
+  }
+
+  /* Hamburger logic */
+  .mobile-toggle {
+    display: block !important;
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-primary);
+  }
+}
+
+.mobile-toggle {
+  display: none;
+}

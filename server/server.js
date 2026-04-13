@@ -16,6 +16,7 @@ const reportRoutes = require('./routes/reports');
 const contactRoutes = require('./routes/contact');
 const timeSlotRoutes = require('./routes/timeSlots');
 const leaveRoutes = require('./routes/leaves');
+const notificationRoutes = require('./routes/notifications');
 const { setupSocket } = require('./config/socket');
 
 connectDB();
@@ -39,8 +40,15 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/time-slots', timeSlotRoutes);
 app.use('/api/leaves', leaveRoutes);
+app.use('/api/notifications', notificationRoutes);
 app.use('/api/inventory', require('./routes/inventory'));
 app.use('/api/analytics', require('./routes/analytics'));
+
+// Specific requested routes
+const { downloadInvoice, submitFeedback } = require('./controllers/appointmentController');
+const { protect } = require('./middleware/auth');
+app.get('/api/invoice/:appointmentId', protect, downloadInvoice);
+app.post('/api/feedback/:appointmentId', protect, submitFeedback);
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok', message: 'TrimTech API' }));
 

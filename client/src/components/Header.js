@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import NotificationsDropdown from './NotificationsDropdown';
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -46,6 +47,7 @@ export default function Header() {
 
           {user ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <NotificationsDropdown />
               <Link to="/dashboard" className="btn btn-primary" style={{ fontSize: '0.9rem' }}>
                 Dashboard
               </Link>

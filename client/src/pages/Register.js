@@ -46,14 +46,7 @@ export default function Register() {
             <label>Password (min 6)</label>
             <input name="password" type="password" value={form.password} onChange={handleChange} required minLength={6} />
           </div>
-          <div className="form-group">
-            <label>Role</label>
-            <select name="role" value={form.role} onChange={handleChange}>
-              <option value="client">Client</option>
-              <option value="employee">Employee</option>
-              <option value="owner">Owner</option>
-            </select>
-          </div>
+
           <div className="form-group">
             <label>Phone</label>
             <input name="phone" value={form.phone} onChange={handleChange} />

@@ -2,11 +2,15 @@ import React from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import NotificationsDropdown from '../components/NotificationsDropdown';
 
 export default function DashboardLayout() {
   const { user, logout } = useAuth();
   const { toggleTheme } = useTheme();
   const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = React.useState(false);
+
+  // ... (rest of the component)
 
   const base = '/dashboard';
   const role = user?.role || 'client';
@@ -30,13 +34,18 @@ export default function DashboardLayout() {
   ];
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
-      <aside style={asideStyle}>
-        <div style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>
-          <span style={{ fontWeight: 700, fontSize: '1.1rem' }}><span style={{ color: 'var(--accent)' }}>Trim</span>Tech</span>
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-            {user?.name} · {user?.role}
-          </p>
+    <div className="dashboard-layout" style={{ display: 'flex', minHeight: '100vh', width: '100%' }}>
+      <aside className={`dashboard-aside ${menuOpen ? 'menu-open' : ''}`} style={asideStyle}>
+        <div style={{ padding: '1rem', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <span style={{ fontWeight: 700, fontSize: '1.1rem' }}><span style={{ color: 'var(--accent)' }}>Trim</span>Tech</span>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+              {user?.name} · {user?.role}
+            </p>
+          </div>
+          <button className="mobile-toggle" onClick={() => setMenuOpen(!menuOpen)}>
+            {menuOpen ? '✕' : '☰'}
+          </button>
         </div>
         <nav style={{ padding: '0.75rem' }}>
           {navItems.map(item => (
@@ -44,6 +53,7 @@ export default function DashboardLayout() {
               key={item.to}
               to={item.to}
               end={item.end}
+              onClick={() => setMenuOpen(false)}
               style={({ isActive }) => ({
                 display: 'block',
                 padding: '0.5rem 0.75rem',
@@ -57,8 +67,11 @@ export default function DashboardLayout() {
             </NavLink>
           ))}
         </nav>
-        <div style={{ marginTop: 'auto', padding: '1rem' }}>
-          <button onClick={toggleTheme} className="btn btn-outline" style={{ width: '100%', marginBottom: '0.5rem' }}>
+        <div className="bottom-actions" style={{ marginTop: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <NotificationsDropdown align="top" />
+          </div>
+          <button onClick={toggleTheme} className="btn btn-outline" style={{ width: '100%' }}>
             Theme
           </button>
           <button onClick={() => { logout(); navigate('/'); }} className="btn btn-outline" style={{ width: '100%' }}>
@@ -66,7 +79,7 @@ export default function DashboardLayout() {
           </button>
         </div>
       </aside>
-      <div style={{ flex: 1, overflow: 'auto' }}>
+      <div style={{ flex: 1, overflow: 'auto', width: '100%' }}>
         <Outlet />
       </div>
     </div>

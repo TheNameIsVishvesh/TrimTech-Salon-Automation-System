@@ -86,9 +86,15 @@ export default function OwnerInventory() {
               <input type="number" min={0} value={form.stock} onChange={e => setForm({ ...form, stock: Number(e.target.value) })} />
             </div>
           </div>
-          <div className="form-group">
-            <label>Low stock threshold</label>
-            <input type="number" min={0} value={form.lowStockThreshold} onChange={e => setForm({ ...form, lowStockThreshold: Number(e.target.value) })} />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div className="form-group">
+              <label>Low stock threshold</label>
+              <input type="number" min={0} value={form.lowStockThreshold} onChange={e => setForm({ ...form, lowStockThreshold: Number(e.target.value) })} />
+            </div>
+            <div className="form-group">
+              <label>Image URL (Optional)</label>
+              <input type="text" value={form.imageUrl || ''} onChange={e => setForm({ ...form, imageUrl: e.target.value })} placeholder={`/images/products/${form.category.toLowerCase().replace(' ', '-')}.jpg`} />
+            </div>
           </div>
           <button type="submit" className="btn btn-primary">{editing ? 'Update' : 'Add'}</button>
           {editing && <button type="button" className="btn btn-outline" style={{ marginLeft: '0.5rem' }} onClick={() => { setEditing(null); setForm({ name: '', category: 'Hair care', mrp: 0, discount: 0, stock: 0, lowStockThreshold: 5 }); }}>Cancel</button>}

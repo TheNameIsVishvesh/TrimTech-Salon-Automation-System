@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../../../api';
 import { formatCurrency } from '../../../utils/format';
 
-const STEPS = ['Category', 'Service', 'Employee', 'Date & Slot', 'Summary', 'Payment'];
+const STEPS = ['Category', 'Service', 'Employee', 'Date & Slot', 'Products', 'Summary', 'Payment'];
 
 export default function BookAppointment() {
   const [step, setStep] = useState(0);
@@ -19,8 +19,14 @@ export default function BookAppointment() {
   });
   const [loading, setLoading] = useState(false);
   const [booked, setBooked] = useState(null);
-  const [paymentMethod, setPaymentMethod] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('Cash');
   const [slotsLoading, setSlotsLoading] = useState(false);
+  const [availableProducts, setAvailableProducts] = useState([]);
+  const [cart, setCart] = useState([]);
+
+  useEffect(() => {
+    api.get('/api/products').then(res => setAvailableProducts(res.data)).catch(console.error);
+  }, []);
 
   useEffect(() => {
     if (selected.category) {
@@ -55,7 +61,8 @@ export default function BookAppointment() {
         serviceId: selected.service._id,
         date: selected.date,
         startTime: selected.slot.startTime,
-        paymentMethod: paymentMethod // 'UPI', 'Card', or 'Cash'
+        paymentMethod: paymentMethod, // 'Cash'
+        products: cart.map(p => ({ productId: p._id, name: p.name, price: (p.price != null ? p.price : (p.mrp - (p.discount || 0))), quantity: p.quantity }))
       });
       setBooked(res.data);
     } catch (err) {
@@ -74,8 +81,8 @@ export default function BookAppointment() {
         <p>Date: {selected.date} · {selected.slot?.startTime}</p>
         <p>Total: {formatCurrency(booked.totalAmount)} (GST included)</p>
         <p>Payment Mode: {booked.paymentMethod}</p>
-        <p>Payment Status: {booked.paymentStatus}</p>
-        <button className="btn btn-primary" style={{ marginTop: '1rem' }} onClick={() => { setBooked(null); setStep(0); setSelected({ category: '', service: null, employee: null, date: '', slot: null }); setPaymentMethod(''); }}>
+        <p style={{ color: 'var(--accent)', fontWeight: 'bold' }}>Payment will be collected at the salon.</p>
+        <button className="btn btn-primary" style={{ marginTop: '1rem' }} onClick={() => { setBooked(null); setStep(0); setSelected({ category: '', service: null, employee: null, date: '', slot: null }); setPaymentMethod('Cash'); setCart([]); }}>
           Book another
         </button>
       </div>
@@ -165,19 +172,93 @@ export default function BookAppointment() {
       {step === 4 && (
         <div className="card">
           <button className="btn btn-outline" style={{ marginBottom: '1rem' }} onClick={() => setStep(3)}>← Back</button>
-          <h3 style={{ marginBottom: '0.75rem' }}>Booking Summary</h3>
-          <p><strong>Service:</strong> {selected.service?.name}</p>
-          <p><strong>Employee:</strong> {selected.employee?.name}</p>
-          <p><strong>Date:</strong> {selected.date} · <strong>Time:</strong> {selected.slot?.startTime}</p>
-          <button className="btn btn-primary" style={{ marginTop: '1rem' }} onClick={() => setStep(5)}>
-            Proceed to Payment
-          </button>
+          <h3 style={{ marginBottom: '1rem' }}>Add Products (Optional)</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {availableProducts.map(p => {
+              const cartItem = cart.find(c => c._id === p._id);
+              return (
+                <div key={p._id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', border: '1px solid var(--border)', borderRadius: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ width: '40px', height: '40px', flexShrink: 0, overflow: 'hidden', borderRadius: '4px' }}>
+                      <img 
+                        src={p.imageUrl || `/images/products/${encodeURIComponent(p.name + ' Image.jpg')}`} 
+                        onError={(e) => { 
+                          if (!e.target.dataset.fallback) {
+                            e.target.dataset.fallback = 'jpg';
+                            e.target.src = `/images/products/${encodeURIComponent(p.name + ' Image.jpg')}`;
+                          } else if (e.target.dataset.fallback === 'jpg') {
+                            e.target.dataset.fallback = 'png';
+                            e.target.src = `/images/products/${encodeURIComponent(p.name + ' Image.png')}`;
+                          } else if (e.target.dataset.fallback === 'png') {
+                            e.target.dataset.fallback = 'category';
+                            e.target.src = `/images/products/${encodeURIComponent((p.category || 'grooming').toLowerCase().replace(' ', '-') + '.jpg')}`;
+                          } else if (e.target.dataset.fallback === 'category') {
+                            e.target.dataset.fallback = 'default';
+                            e.target.src = '/images/default-product.png'; 
+                          } else {
+                            e.target.onError = null;
+                          }
+                        }}
+                        alt={p.name} 
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                      />
+                    </div>
+                    <div>
+                      <h4 style={{ margin: 0 }}>{p.name}</h4>
+                      <p style={{ margin: 0, color: 'var(--text-secondary)' }}>{formatCurrency(p.price != null ? p.price : (p.mrp - (p.discount || 0)))}</p>
+                    </div>
+                  </div>
+                  {cartItem ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <button className="btn btn-outline" style={{ padding: '0.2rem 0.5rem' }} onClick={() => {
+                        if (cartItem.quantity === 1) setCart(cart.filter(c => c._id !== p._id));
+                        else setCart(cart.map(c => c._id === p._id ? { ...c, quantity: c.quantity - 1 } : c));
+                      }}>-</button>
+                      <span>{cartItem.quantity}</span>
+                      <button className="btn btn-outline" style={{ padding: '0.2rem 0.5rem' }} onClick={() => {
+                        setCart(cart.map(c => c._id === p._id ? { ...c, quantity: c.quantity + 1 } : c));
+                      }}>+</button>
+                      <button className="btn btn-outline" style={{ padding: '0.2rem 0.5rem', color: 'red' }} onClick={() => {
+                        setCart(cart.filter(c => c._id !== p._id));
+                      }}>Remove</button>
+                    </div>
+                  ) : (
+                    <button className="btn btn-primary" onClick={() => setCart([...cart, { ...p, quantity: 1 }])}>Add</button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <button className="btn btn-primary" style={{ marginTop: '1rem' }} onClick={() => setStep(5)}>Next: Summary</button>
         </div>
       )}
 
       {step === 5 && (
         <div className="card">
           <button className="btn btn-outline" style={{ marginBottom: '1rem' }} onClick={() => setStep(4)}>← Back</button>
+          <h3 style={{ marginBottom: '0.75rem' }}>Booking Summary</h3>
+          <p><strong>Service:</strong> {selected.service?.name}</p>
+          <p><strong>Employee:</strong> {selected.employee?.name}</p>
+          <p><strong>Date:</strong> {selected.date} · <strong>Time:</strong> {selected.slot?.startTime}</p>
+          {cart.length > 0 && (
+            <div style={{ marginTop: '1rem' }}>
+              <strong>Products Added:</strong>
+              <ul style={{ paddingLeft: '1.5rem', marginTop: '0.5rem' }}>
+                {cart.map(p => (
+                  <li key={p._id}>{p.name} (x{p.quantity}) - {formatCurrency((p.price != null ? p.price : (p.mrp - (p.discount || 0))) * p.quantity)}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <button className="btn btn-primary" style={{ marginTop: '1rem' }} onClick={() => setStep(6)}>
+            Proceed to Payment
+          </button>
+        </div>
+      )}
+
+      {step === 6 && (
+        <div className="card">
+          <button className="btn btn-outline" style={{ marginBottom: '1rem' }} onClick={() => setStep(5)}>← Back</button>
           <h3 style={{ marginBottom: '1rem' }}>Invoice & Payment</h3>
 
           <div style={{ background: 'var(--bg-default)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem' }}>
@@ -185,76 +266,37 @@ export default function BookAppointment() {
               <span>{selected.service?.name}</span>
               <span>{formatCurrency(selected.service?.price)}</span>
             </div>
+            {cart.map(p => (
+              <div key={p._id} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
+                <span>{p.name} (x{p.quantity})</span>
+                <span>{formatCurrency((p.price != null ? p.price : (p.mrp - (p.discount || 0))) * p.quantity)}</span>
+              </div>
+            ))}
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
               <span>GST (18%)</span>
-              <span>{formatCurrency(Math.round((selected.service?.price || 0) * 0.18))}</span>
+              <span>{formatCurrency(Math.round(((selected.service?.price || 0) + cart.reduce((acc, p) => acc + (p.price != null ? p.price : (p.mrp - (p.discount || 0))) * p.quantity, 0)) * 0.18))}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
               <span>Discount</span>
               <span>{formatCurrency(0)}</span>
             </div>
-            {paymentMethod === 'Card' && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
-                <span>Convenience Fee</span>
-                <span>{formatCurrency(50)}</span>
-              </div>
-            )}
             <hr style={{ margin: '0.5rem 0', borderColor: 'var(--border)' }} />
             <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '1.1rem' }}>
               <span>Final Payable Amount</span>
-              <span>{formatCurrency(Math.round((selected.service?.price || 0) * 1.18) + (paymentMethod === 'Card' ? 50 : 0))}</span>
+              <span>{formatCurrency(Math.round(((selected.service?.price || 0) + cart.reduce((acc, p) => acc + (p.price != null ? p.price : (p.mrp - (p.discount || 0))) * p.quantity, 0)) * 1.18))}</span>
             </div>
           </div>
 
           <div style={{ marginBottom: '1.5rem' }}>
-            <h4 style={{ marginBottom: '0.5rem' }}>Select Payment Method</h4>
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-              {['UPI', 'Card', 'Cash'].map(method => (
-                <button
-                  key={method}
-                  className={paymentMethod === method ? 'btn btn-primary' : 'btn btn-outline'}
-                  onClick={() => setPaymentMethod(method)}
-                >
-                  {method === 'Cash' ? 'Cash at Salon' : method}
-                </button>
-              ))}
-            </div>
+            <h4 style={{ marginBottom: '0.5rem' }}>Payment Method: Pay at Salon</h4>
           </div>
 
-          {paymentMethod && (
-            <div style={{ marginBottom: '1.5rem', padding: '1rem', background: 'var(--bg-default)', borderRadius: '8px' }}>
-              {paymentMethod === 'UPI' && (
-                <div className="form-group">
-                  <label>UPI ID (Mock)</label>
-                  <input type="text" placeholder="e.g., username@upi" />
-                </div>
-              )}
-              {paymentMethod === 'Card' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  <div className="form-group">
-                    <label>Card Number (Mock)</label>
-                    <input type="text" placeholder="xxxx-xxxx-xxxx-xxxx" />
-                  </div>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <div className="form-group" style={{ flex: 1 }}>
-                      <label>Expiry</label>
-                      <input type="text" placeholder="MM/YY" />
-                    </div>
-                    <div className="form-group" style={{ flex: 1 }}>
-                      <label>CVV</label>
-                      <input type="password" placeholder="***" />
-                    </div>
-                  </div>
-                </div>
-              )}
-              {paymentMethod === 'Cash' && (
-                <p style={{ color: 'var(--text-secondary)' }}>You can pay at the salon during your visit.</p>
-              )}
-            </div>
-          )}
+          <div style={{ marginBottom: '1.5rem', padding: '1rem', background: 'var(--bg-default)', borderRadius: '8px' }}>
+            <p style={{ color: 'var(--text-secondary)' }}>You can pay at the salon during your visit.</p>
+          </div>
 
-          <button className="btn btn-primary" style={{ width: '100%' }} disabled={loading || !paymentMethod} onClick={handleConfirm}>
-            {loading ? 'Processing...' : `Pay & Confirm ${formatCurrency(Math.round((selected.service?.price || 0) * 1.18) + (paymentMethod === 'Card' ? 50 : 0))}`}
+          <button className="btn btn-primary" style={{ width: '100%' }} disabled={loading} onClick={handleConfirm}>
+            {loading ? 'Processing...' : `Confirm Booking ${formatCurrency(Math.round(((selected.service?.price || 0) + cart.reduce((acc, p) => acc + (p.price != null ? p.price : (p.mrp - (p.discount || 0))) * p.quantity, 0)) * 1.18))}`}
           </button>
         </div>
       )}
