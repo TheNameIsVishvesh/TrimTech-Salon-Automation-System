@@ -103,11 +103,11 @@ exports.forgotPassword = async (req, res) => {
     await user.save({ validateBeforeSave: false });
 
     // Send email
-    const { sendResetEmail } = require('../utils/emailService');
+    const { sendOtpEmail } = require('../services/emailService');
     const resetUrl = `${process.env.CLIENT_URL || 'http://localhost:3000'}/reset-password/${resetToken}`;
     
     try {
-      await sendResetEmail(user.email, resetUrl);
+      await sendOtpEmail(user.email, resetUrl);
       res.status(200).json({ message: 'Email sent successfully' });
     } catch (err) {
       user.resetPasswordToken = undefined;

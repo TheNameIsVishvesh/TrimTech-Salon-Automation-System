@@ -5,7 +5,7 @@ const Appointment = require('../models/Appointment');
 const User = require('../models/User');
 const Service = require('../models/Service');
 const { emitAppointmentUpdate } = require('../config/socket');
-const { sendBookingEmail, sendInvoiceEmail } = require('../utils/emailService');
+const { sendBookingEmail, sendInvoiceEmail } = require('../services/emailService');
 const { generateInvoicePDF } = require('../utils/pdfService');
 const { createNotification } = require('./notificationController');
 
