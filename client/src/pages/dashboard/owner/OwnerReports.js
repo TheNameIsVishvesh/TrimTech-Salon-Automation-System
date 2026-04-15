@@ -54,7 +54,7 @@ export default function OwnerAnalytics() {
           <h3 style={{ marginBottom: '1rem' }}>Revenue Trends ({filter})</h3>
           <div style={{ height: 300 }}>
             <ResponsiveContainer width="100%" height="100%">
-              {filter === 'daily' || filter === 'weekly' ? (
+              {filter !== 'all' ? (
                 <LineChart data={revenueData.daily}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" />
@@ -91,7 +91,7 @@ export default function OwnerAnalytics() {
                     fill="#8884d8"
                     dataKey="revenue"
                     nameKey="service"
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    label={({ payload, percent }) => `${payload.service || 'Unknown'} ${(percent * 100).toFixed(0)}%`}
                   >
                     {revenueData.serviceWise.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

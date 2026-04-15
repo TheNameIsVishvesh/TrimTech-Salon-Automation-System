@@ -20,7 +20,7 @@ exports.getRevenueAnalytics = async (req, res) => {
 
         const appointments = await Appointment.find({
             ...dateFilter,
-            paymentStatus: 'paid'
+            status: 'completed'
         }).populate('serviceId', 'name');
 
         // Daily Revenue
