@@ -25,7 +25,7 @@ export default function Chatbot() {
   const getAnswer = (text) => {
     const lower = text.toLowerCase().trim();
     if (!lower) return;
-    
+
     if (['hi', 'hello', 'hey', 'hii'].includes(lower)) {
       return "Hi! I'm TrimTech assistant. Ask me about services, prices or duration 😊";
     }
@@ -87,7 +87,7 @@ export default function Chatbot() {
     } else if (action === 'Check Prices') {
       const msg = { from: 'user', text: 'Check Prices' };
       setMessages(m => [...m, msg]);
-       setTimeout(() => setMessages(m => [...m, { from: 'bot', text: 'Tell me which service you are looking for?' }]), 400);
+      setTimeout(() => setMessages(m => [...m, { from: 'bot', text: 'Tell me which service you are looking for?' }]), 400);
     }
   };
 
@@ -109,9 +109,9 @@ export default function Chatbot() {
           </div>
 
           <div style={{ padding: '0.5rem', display: 'flex', gap: '0.2rem', overflowX: 'auto', borderTop: '1px solid var(--border)', background: 'var(--bg-card)' }}>
-             <button className="btn btn-outline" style={{ fontSize: '0.75rem', padding: '0.3rem 0.6rem', whiteSpace: 'nowrap' }} onClick={() => handleActionClick('Show Services')}>Show Services</button>
-             <button className="btn btn-outline" style={{ fontSize: '0.75rem', padding: '0.3rem 0.6rem', whiteSpace: 'nowrap' }} onClick={() => handleActionClick('Check Prices')}>Check Prices</button>
-             <button className="btn btn-outline" style={{ fontSize: '0.75rem', padding: '0.3rem 0.6rem', whiteSpace: 'nowrap' }} onClick={() => handleActionClick('Book Appointment')}>Book Appointment</button>
+            <button className="btn btn-outline" style={{ fontSize: '0.75rem', padding: '0.3rem 0.6rem', whiteSpace: 'nowrap' }} onClick={() => handleActionClick('Show Services')}>Show Services</button>
+            <button className="btn btn-outline" style={{ fontSize: '0.75rem', padding: '0.3rem 0.6rem', whiteSpace: 'nowrap' }} onClick={() => handleActionClick('Check Prices')}>Check Prices</button>
+            <button className="btn btn-outline" style={{ fontSize: '0.75rem', padding: '0.3rem 0.6rem', whiteSpace: 'nowrap' }} onClick={() => handleActionClick('Book Appointment')}>Book Appointment</button>
           </div>
 
           <div style={{ padding: '0.5rem', borderTop: '1px solid var(--border)', display: 'flex', gap: '0.5rem' }}>

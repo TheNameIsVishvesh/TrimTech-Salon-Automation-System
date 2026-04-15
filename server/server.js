@@ -22,13 +22,21 @@ const { setupSocket } = require('./config/socket');
 connectDB();
 
 const app = express();
-const server = http.createServer(app);
+// Remove server creation here, will use app.listen
 
-// Socket.io for real-time appointment sync
-setupSocket(server);
 
-app.use(cors({ origin: true, credentials: true }));
+
+
+app.use(cors({
+  origin: "*",
+  credentials: true
+}));
 app.use(express.json());
+
+app.get("/", (req, res) => {
+  res.send("TrimTech Backend Running");
+});
+
 
 // REST API routes
 app.use('/api/auth', authRoutes);
@@ -53,4 +61,10 @@ app.post('/api/feedback/:appointmentId', protect, submitFeedback);
 app.get('/api/health', (req, res) => res.json({ status: 'ok', message: 'TrimTech API' }));
 
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => console.log(`TrimTech server running on port ${PORT}`));
+const serverInstance = app.listen(PORT, () => {
+  console.log(`TrimTech server running on port ${PORT}`);
+});
+
+// Setup socket with the server instance
+setupSocket(serverInstance);
+
