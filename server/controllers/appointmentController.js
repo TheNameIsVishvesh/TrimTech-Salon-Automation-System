@@ -161,24 +161,14 @@ exports.create = async (req, res) => {
     }).catch(err => console.error(err));
     // -----------------------
 
-    // Background Email Logic (Booking Confirmation Only)
-    (async () => {
-      try {
-        const clientEmail = populated.clientId?.email;
-        if (clientEmail) {
-          const emailData = {
-            serviceName: populated.serviceId?.name || 'Service',
-            date: populated.date,
-            time: populated.startTime,
-            employeeName: populated.employeeId?.name || 'Employee'
-          };
-          
-          await sendBookingEmail(clientEmail, emailData);
-        }
-      } catch (error) {
-        console.error('Error sending booking confirmation email:', error);
-      }
-    })();
+    // Booking Confirmation Email
+    if (populated.clientId?.email) {
+      sendBookingEmail(populated.clientId.email, {
+        serviceName: populated.serviceId?.name || 'Service',
+        date: populated.date ? new Date(populated.date).toDateString() : 'TBD',
+        time: populated.startTime || 'TBD'
+      }).catch(err => console.error("Booking email failed:", err.message));
+    }
 
     res.status(201).json(populated);
   } catch (err) {
@@ -234,36 +224,30 @@ exports.update = async (req, res) => {
     }
     // -----------------------
 
-    // Background Email & Invoice Logic for Completed Appointment
-    if (updates.status === 'completed' && apt.status !== 'completed') {
-      (async () => {
-        try {
-          const clientEmail = updated.clientId?.email;
-          if (clientEmail) {
-            const invoiceData = {
-              invoiceNumber: updated.invoiceNumber,
-              date: updated.date,
-              time: updated.startTime,
-              customerName: updated.clientId?.name || 'Customer',
-              employeeName: updated.employeeId?.name || 'Employee',
-              serviceName: updated.serviceId?.name || 'Service',
-              products: updated.products || [],
-              amount: updated.amount,
-              gstAmount: updated.gstAmount,
-              totalAmount: updated.totalAmount
-            };
+    // Invoice Logic for Completed Appointment
+    if (updates.status === 'completed' && apt.status !== 'completed' && updated.clientId?.email) {
+      try {
+        const invoiceData = {
+          invoiceNumber: updated.invoiceNumber,
+          date: updated.date,
+          time: updated.startTime,
+          customerName: updated.clientId?.name || 'Customer',
+          employeeName: updated.employeeId?.name || 'Employee',
+          serviceName: updated.serviceId?.name || 'Service',
+          products: updated.products || [],
+          amount: updated.amount,
+          gstAmount: updated.gstAmount,
+          totalAmount: updated.totalAmount
+        };
 
-            const pdfPath = await generateInvoicePDF(invoiceData);
-            
-            // Save invoice path in the database
-            await Appointment.findByIdAndUpdate(updated._id, { invoicePath: pdfPath });
-            
-            await sendInvoiceEmail(clientEmail, pdfPath, updated._id);
-          }
-        } catch (error) {
-          console.error('Error generating/sending completion invoice:', error);
-        }
-      })();
+        const pdfPath = await generateInvoicePDF(invoiceData);
+        await Appointment.findByIdAndUpdate(updated._id, { invoicePath: pdfPath });
+        
+        sendInvoiceEmail(updated.clientId.email, { amount: updated.totalAmount })
+          .catch(err => console.error("Invoice email failed:", err.message));
+      } catch (error) {
+        console.error('Error generating completion invoice:', error.message);
+      }
     }
 
     res.json(updated);
