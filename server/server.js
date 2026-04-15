@@ -60,11 +60,15 @@ app.post('/api/feedback/:appointmentId', protect, submitFeedback);
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok', message: 'TrimTech API' }));
 
-const PORT = process.env.PORT || 5000;
-const serverInstance = app.listen(PORT, () => {
-  console.log(`TrimTech server running on port ${PORT}`);
-});
+try {
+  const PORT = process.env.PORT || 5000;
+  const serverInstance = app.listen(PORT, () => {
+    console.log(`TrimTech server running on port ${PORT}`);
+  });
 
-// Setup socket with the server instance
-setupSocket(serverInstance);
-
+  // Setup socket with the server instance
+  setupSocket(serverInstance);
+} catch (error) {
+  console.error("Server startup error:", error);
+  process.exit(1);
+}
