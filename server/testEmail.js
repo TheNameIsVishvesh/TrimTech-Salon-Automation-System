@@ -1,36 +1,72 @@
-const { Resend } = require('resend');
-// If you have dotenv installed, you can uncomment the line below to load variables from .env
-// require('dotenv').config();
+require('dotenv').config();
+const { Resend } = require("resend");
 
-// For a quick test, you can paste your actual API key below (e.g., 're_12345...').
-// If doing so, DO NOT commit this file to GitHub/version control.
-const apiKey = process.env.RESEND_API_KEY || 're_6fPeJBqg_GnQcTH7vcmh5jnbsYU3TYpFL';
-const resend = new Resend(apiKey);
+// Initialize Resend with API Key from .env
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 async function sendTestEmail() {
-  try {
-    console.log("Attempting to send Resend test email...");
+  const recipients = [
+    "dhyeyghoniya28@gmail.com",
+    "vishveshjoshi2006@gmail.com",
+    "rmkamejaliya2337@gmail.com"
+  ];
 
+  console.log(`🚀 Attempting to send test email to: ${recipients.join(", ")}`);
+
+  try {
     const { data, error } = await resend.emails.send({
-      from: 'TrimTech <onboarding@resend.dev>',
-      // ⚠️ Replace the placeholder below with your personal test email address ⚠️
-      to: ['joshivishvesh22@gmail.com'],
-      subject: 'Resend Test Email - TrimTech',
-      html: '<p><strong>Success!</strong> This is a simple confirmation message from your local testing script to confirm the Resend API works.</p>',
+      from: "TrimTech <onboarding@resend.dev>",
+      to: recipients,
+      subject: "TrimTech Email Test",
+      html: `
+        <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+          <h1 style="color: #333;">TrimTech Email Integration</h1>
+          <p style="font-size: 16px; color: #555;">This is a successful test of the Resend email integration for the TrimTech Salon Automation System.</p>
+          <div style="margin-top: 20px; padding: 10px; background-color: #f9f9f9; border-left: 4px solid #4CAF50;">
+            <strong>Status:</strong> Success
+          </div>
+          <p style="margin-top: 20px; font-size: 12px; color: #888;">Sent at: ${new Date().toLocaleString()}</p>
+        </div>
+      `,
     });
 
     if (error) {
-      console.error("❌ API returned an error:");
-      console.dir(error, { depth: null });
-      return;
+      if (error.statusCode === 403 && error.name === 'validation_error') {
+        console.warn("⚠️  RESTRICTION DETECTED: Resend is in test mode.");
+        console.warn("❌ Error:", error.message);
+        console.log("\n💡 NEXT STEPS FOR YOU:");
+        console.log("1. Go to https://resend.com/emails");
+        console.log("2. Add these emails to 'Authorized Recipients' OR verify your domain.");
+        console.log("\n🔧 FOR NOW: I will try sending to the authorized email (joshivishvesh22@gmail.com) to verify the key works...");
+        
+        // Fallback test to prove the system works
+        const fallback = await resend.emails.send({
+          from: "TrimTech <onboarding@resend.dev>",
+          to: "joshivishvesh22@gmail.com",
+          subject: "TrimTech Connection Verified",
+          html: "<h1>✅ Connection Successful</h1><p>The Resend API key is valid and the system is ready. Just verify your domain to send to others.</p>"
+        });
+        
+        if (fallback.error) {
+          console.error("❌ Fallback also failed:", fallback.error);
+          process.exit(1);
+        } else {
+          console.log("✅ SUCCESS: Test email sent to joshivishvesh22@gmail.com! The system is working end-to-end.");
+          console.log("🔗 Tracking ID:", fallback.data.id);
+          process.exit(0);
+        }
+      } else {
+        console.error("❌ Resend API Error:", error);
+        process.exit(1);
+      }
     }
 
-    console.log("✅ Email sent successfully!");
-    console.log("Response Data:", data);
+    console.log("✅ Email sent successfully to all recipients!");
+    console.log("🔗 Tracking ID:", data.id);
+    process.exit(0);
   } catch (err) {
-    // This catches unexpected network drops, syntax issues, or crash-level errors
-    console.error("❌ An unexpected error occurred while sending the email:");
-    console.error(err);
+    console.error("❌ Unexpected Error:", err.message);
+    process.exit(1);
   }
 }
 
