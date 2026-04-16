@@ -104,7 +104,7 @@ exports.forgotPassword = async (req, res) => {
 
     // Send email
     const { sendOtpEmail } = require('../services/emailService');
-    const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:3000';
+    const CLIENT_URL = process.env.CLIENT_URL;
     const resetUrl = `${CLIENT_URL}/reset-password/${resetToken}`;
 
     try {

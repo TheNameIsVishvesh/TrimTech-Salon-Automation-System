@@ -4,7 +4,7 @@ const Inventory = require('../models/Inventory');
 const ServiceConsumable = require('../models/ServiceConsumable');
 require('dotenv').config();
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/trimtech';
+const MONGODB_URI = process.env.MONGODB_URI;
 
 async function seed() {
     await mongoose.connect(MONGODB_URI);

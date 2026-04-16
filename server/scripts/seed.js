@@ -11,7 +11,7 @@ const TimeSlot = require('../models/TimeSlot');
 const Inventory = require('../models/Inventory');
 const ServiceConsumable = require('../models/ServiceConsumable');
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/trimtech';
+const MONGODB_URI = process.env.MONGODB_URI;
 
 const services = [
   { name: 'Haircut', category: 'Hair', duration: 30, price: 300, description: 'Classic haircut' },

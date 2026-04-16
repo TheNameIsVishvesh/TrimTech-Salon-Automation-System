@@ -3,7 +3,7 @@ const Appointment = require('./models/Appointment');
 const User = require('./models/User');
 const { getRevenueAnalytics, getEmployeePerformance, getNoShowAnalytics } = require('./controllers/analyticsController');
 
-mongoose.connect('mongodb://localhost:27017/trimtech').then(async () => {
+mongoose.connect(process.env.MONGODB_URI).then(async () => {
     let currentMethod = '';
     const req = { query: { filter: 'all' } };
     const res = {

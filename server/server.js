@@ -3,6 +3,12 @@
  * Backend entry point: Express server + Socket.io for real-time sync
  */
 require('dotenv').config();
+
+if (!process.env.CLIENT_URL) {
+  console.error("FATAL ERROR: CLIENT_URL is not set in environment variables.");
+  process.exit(1);
+}
+
 const express = require('express');
 const http = require('http');
 const cors = require('cors');
