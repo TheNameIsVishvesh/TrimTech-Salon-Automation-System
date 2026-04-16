@@ -164,6 +164,7 @@ exports.create = async (req, res) => {
     // Booking Confirmation Email
     if (populated.clientId?.email) {
       sendBookingEmail(populated.clientId.email, {
+        customerName: populated.clientId.name,
         serviceName: populated.serviceId?.name || 'Service',
         date: populated.date ? new Date(populated.date).toDateString() : 'TBD',
         time: populated.startTime || 'TBD'
@@ -243,7 +244,10 @@ exports.update = async (req, res) => {
         const pdfPath = await generateInvoicePDF(invoiceData);
         await Appointment.findByIdAndUpdate(updated._id, { invoicePath: pdfPath });
         
-        sendInvoiceEmail(updated.clientId.email, { amount: updated.totalAmount })
+        sendInvoiceEmail(updated.clientId.email, { 
+          amount: updated.totalAmount,
+          invoiceNumber: updated.invoiceNumber 
+        }, pdfPath)
           .catch(err => console.error("Invoice email failed:", err.message));
       } catch (error) {
         console.error('Error generating completion invoice:', error.message);
