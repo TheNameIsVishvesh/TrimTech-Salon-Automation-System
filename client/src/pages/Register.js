@@ -29,7 +29,7 @@ export default function Register() {
   return (
     <div className="container" style={{ padding: '3rem 1.5rem', maxWidth: '420px', margin: '0 auto' }}>
       <h1 style={{ fontFamily: 'Playfair Display', marginBottom: '0.5rem' }}>Register</h1>
-      <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>Create your TrimTech account</p>
+      <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>Create your African Hair Saloon account</p>
 
       <div className="card">
         <form onSubmit={handleSubmit}>

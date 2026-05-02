@@ -28,21 +28,33 @@ export default function Contact() {
     <div className="container" style={{ padding: '2rem 1.5rem' }}>
       <h1 style={{ fontFamily: 'Playfair Display', marginBottom: '0.5rem' }}>Contact</h1>
       <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-        Get in touch with TrimTech. We’d love to hear from you.
+        Get in touch with African Hair Saloon. We’d love to hear from you.
       </p>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem' }}>
         <div className="card">
           <h3 style={{ marginBottom: '0.75rem' }}>Address</h3>
           <p style={{ color: 'var(--text-secondary)' }}>
-            123, MG Road, Bangalore, Karnataka 560001
+            Shop Number - 1, Adarsh Tenament, Near Chandola Lake, Opposite Torrent Power, Isanpur Bhairavnath Road, Isanpur, Ahmedabad-382443, Gujarat
           </p>
           <h3 style={{ marginTop: '1rem', marginBottom: '0.75rem' }}>Phone</h3>
           <p style={{ color: 'var(--text-secondary)' }}>+91 98765 43210</p>
           <h3 style={{ marginTop: '1rem', marginBottom: '0.75rem' }}>Email</h3>
           <p style={{ color: 'var(--text-secondary)' }}>hello@trimtech.com</p>
-          <div style={{ marginTop: '1rem', height: '200px', background: 'var(--bg-primary)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>
-            Map placeholder (embed Google Map if needed)
+          <div style={{ marginTop: '1rem', height: '200px', background: 'var(--bg-primary)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', overflow: 'hidden' }}>
+            <iframe
+              src="https://maps.google.com/maps?q=Shop+Number+-+1,+Adarsh+Tenament,+Near+Chandola+Lake,+Opposite+Torrent+Power,+Isanpur,+Ahmedabad&t=&z=13&ie=UTF8&iwloc=&output=embed"
+              width="100%"
+              height="100%"
+              style={{ border: 0 }}
+              allowFullScreen=""
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              title="Google Maps"
+            ></iframe>
+          </div>
+          <div style={{ marginTop: '0.5rem' }}>
+            <a href="https://share.google/ZteK9m8j3O2hBsC5S" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: 'bold' }}>View on Google Maps</a>
           </div>
         </div>
 

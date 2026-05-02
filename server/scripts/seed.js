@@ -100,7 +100,7 @@ async function seed() {
   const existingOwner = await User.findOne({ email: 'owner@trimtech.com' });
   if (!existingOwner) {
     await User.create({
-      name: 'TrimTech Owner',
+      name: 'African Hair Saloon Owner',
       email: 'owner@trimtech.com',
       password: 'owner123',
       role: 'owner',

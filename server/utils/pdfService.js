@@ -20,7 +20,7 @@ exports.generateInvoicePDF = async (data) => {
       doc
         .font('Helvetica-Bold')
         .fontSize(28)
-        .text('TrimTech Salon', { align: 'center' })
+        .text('African Hair Saloon', { align: 'center' })
         .moveDown(0.5);
 
       doc
@@ -90,7 +90,7 @@ exports.generateInvoicePDF = async (data) => {
       // Footer
       const footerY = doc.page.height - 100;
       doc.font('Helvetica-Oblique').fontSize(12);
-      doc.text('Thank you for visiting TrimTech', 50, footerY, { align: 'center', width: doc.page.width - 100 });
+      doc.text('Thank you for visiting African Hair Saloon', 50, footerY, { align: 'center', width: doc.page.width - 100 });
 
       doc.end();
 

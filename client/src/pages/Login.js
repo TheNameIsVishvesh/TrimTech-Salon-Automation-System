@@ -28,7 +28,7 @@ export default function Login() {
   return (
     <div className="container" style={{ padding: '3rem 1.5rem', maxWidth: '420px', margin: '0 auto' }}>
       <h1 style={{ fontFamily: 'Playfair Display', marginBottom: '0.5rem' }}>Login</h1>
-      <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>Sign in to your TrimTech account</p>
+      <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>Sign in to your African Hair Saloon account</p>
 
       <div className="card">
         <form onSubmit={handleSubmit}>

@@ -40,7 +40,7 @@ app.use(cors({
 app.use(express.json());
 
 app.get("/", (req, res) => {
-  res.send("TrimTech Backend Running");
+  res.send("African Hair Saloon Backend Running");
 });
 
 
@@ -64,12 +64,12 @@ const { protect } = require('./middleware/auth');
 app.get('/api/invoice/:appointmentId', protect, downloadInvoice);
 app.post('/api/feedback/:appointmentId', protect, submitFeedback);
 
-app.get('/api/health', (req, res) => res.json({ status: 'ok', message: 'TrimTech API' }));
+app.get('/api/health', (req, res) => res.json({ status: 'ok', message: 'African Hair Saloon API' }));
 
 try {
   const PORT = process.env.PORT || 5000;
   const serverInstance = app.listen(PORT, () => {
-    console.log(`TrimTech server running on port ${PORT}`);
+    console.log(`African Hair Saloon server running on port ${PORT}`);
   });
 
   // Setup socket with the server instance

@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 
 export default function Chatbot() {
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState([{ from: 'bot', text: 'Hi! I\'m TrimTech assistant. Ask me about services, prices or duration 😊' }]);
+  const [messages, setMessages] = useState([{ from: 'bot', text: 'Hi! I\'m African Hair Saloon assistant. Ask me about services, prices or duration 😊' }]);
   const [input, setInput] = useState('');
   const [services, setServices] = useState([]);
   const bottomRef = useRef(null);
@@ -27,7 +27,7 @@ export default function Chatbot() {
     if (!lower) return;
 
     if (['hi', 'hello', 'hey', 'hii'].includes(lower)) {
-      return "Hi! I'm TrimTech assistant. Ask me about services, prices or duration 😊";
+      return "Hi! I'm African Hair Saloon assistant. Ask me about services, prices or duration 😊";
     }
 
     const isAskingPrice = lower.includes('price') || lower.includes('cost') || lower.includes('charges');
@@ -96,7 +96,7 @@ export default function Chatbot() {
       {open && (
         <div className="card" style={{ width: '320px', maxWidth: 'calc(100vw - 3rem)', height: '420px', maxHeight: 'calc(100vh - 100px)', display: 'flex', flexDirection: 'column', padding: 0, marginBottom: '1rem' }}>
           <div style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <strong>TrimTech Smart Assistant</strong>
+            <strong>African Hair Saloon Assistant</strong>
             <button onClick={() => setOpen(false)} style={{ background: 'none', fontSize: '1.2rem', padding: '0 0.5rem' }} aria-label="Close">×</button>
           </div>
           <div style={{ flex: 1, overflowY: 'auto', padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>

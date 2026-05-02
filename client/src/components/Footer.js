@@ -13,7 +13,7 @@ export default function Footer() {
     }}>
       <div className="container" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: '2rem' }}>
         <div>
-          <strong style={{ color: 'var(--text-primary)' }}><span style={{ color: 'var(--accent)' }}>Trim</span>Tech</strong>
+          <strong style={{ color: 'var(--text-primary)' }}><span style={{ color: 'var(--accent)' }}>African</span> Hair Saloon</strong>
           <p style={{ marginTop: '0.5rem' }}>Salon Automation & Management System</p>
         </div>
         <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
@@ -24,7 +24,7 @@ export default function Footer() {
         </div>
       </div>
       <div className="container" style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
-        © {new Date().getFullYear()} TrimTech. All rights reserved.
+        © {new Date().getFullYear()} African Hair Saloon. All rights reserved.
       </div>
     </footer>
   );

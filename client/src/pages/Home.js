@@ -21,7 +21,7 @@ export default function Home() {
       <section style={heroStyle}>
         <div className="container" style={{ textAlign: 'center', padding: '4rem 1rem' }}>
           <h1 style={{ fontFamily: 'Playfair Display', fontSize: 'clamp(2rem, 5vw, 3rem)', marginBottom: '0.5rem' }}>
-            Welcome to <span style={{ color: 'var(--accent)' }}>TrimTech</span>
+            Welcome to <span style={{ color: 'var(--accent)' }}>African Hair Saloon</span>
           </h1>
           <p style={{ fontSize: '1.15rem', color: 'var(--text-secondary)', marginBottom: '2rem', maxWidth: '560px', margin: '0 auto 2rem' }}>
             Your smart salon experience. Book appointments, explore services, and look your best.

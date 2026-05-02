@@ -15,13 +15,13 @@ async function sendTestEmail() {
 
   try {
     const { data, error } = await resend.emails.send({
-      from: "TrimTech <onboarding@resend.dev>",
+      from: "African Hair Saloon <onboarding@resend.dev>",
       to: recipients,
-      subject: "TrimTech Email Test",
+      subject: "African Hair Saloon Email Test",
       html: `
         <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
-          <h1 style="color: #333;">TrimTech Email Integration</h1>
-          <p style="font-size: 16px; color: #555;">This is a successful test of the Resend email integration for the TrimTech Salon Automation System.</p>
+          <h1 style="color: #333;">African Hair Saloon Email Integration</h1>
+          <p style="font-size: 16px; color: #555;">This is a successful test of the Resend email integration for the African Hair Saloon System.</p>
           <div style="margin-top: 20px; padding: 10px; background-color: #f9f9f9; border-left: 4px solid #4CAF50;">
             <strong>Status:</strong> Success
           </div>
@@ -41,9 +41,9 @@ async function sendTestEmail() {
         
         // Fallback test to prove the system works
         const fallback = await resend.emails.send({
-          from: "TrimTech <onboarding@resend.dev>",
+          from: "African Hair Saloon <onboarding@resend.dev>",
           to: "joshivishvesh22@gmail.com",
-          subject: "TrimTech Connection Verified",
+          subject: "African Hair Saloon Connection Verified",
           html: "<h1>✅ Connection Successful</h1><p>The Resend API key is valid and the system is ready. Just verify your domain to send to others.</p>"
         });
         

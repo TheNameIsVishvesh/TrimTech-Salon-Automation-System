@@ -7,7 +7,7 @@ if (!process.env.RESEND_API_KEY) {
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const FROM_EMAIL = "TrimTech <onboarding@resend.dev>";
+const FROM_EMAIL = "African Hair Saloon <onboarding@resend.dev>";
 
 const sendEmail = async (options) => {
   try {
@@ -24,13 +24,13 @@ const sendEmail = async (options) => {
 const baseTemplate = (content) => `
 <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background-color: #ffffff;">
   <div style="text-align: center; padding-bottom: 20px; border-bottom: 2px solid #5a67d8;">
-    <h1 style="color: #5a67d8; margin: 0;">TrimTech Salon</h1>
+    <h1 style="color: #5a67d8; margin: 0;">African Hair Saloon</h1>
   </div>
   <div style="padding: 20px 0; color: #333; line-height: 1.6;">
     ${content}
   </div>
   <div style="text-align: center; padding-top: 20px; border-top: 1px solid #eeeeee; font-size: 12px; color: #777;">
-    <p>&copy; 2025 TrimTech Salon Management System. All rights reserved.</p>
+    <p>&copy; 2025 African Hair Saloon Management System. All rights reserved.</p>
   </div>
 </div>
 `;
@@ -49,7 +49,7 @@ exports.sendBookingEmail = (to, data) => {
   `;
   return sendEmail({
     to,
-    subject: "Booking Confirmed - TrimTech",
+    subject: "Booking Confirmed - African Hair Saloon",
     html: baseTemplate(content),
   });
 };
@@ -66,7 +66,7 @@ exports.sendInvoiceEmail = (to, data, attachmentPath = null) => {
 
   const content = `
     <h2 style="color: #2d3748;">Invoice for Your Service</h2>
-    <p>Thank you for choosing TrimTech! Please find your invoice details below.</p>
+    <p>Thank you for choosing African Hair Saloon! Please find your invoice details below.</p>
     <div style="background-color: #f7fafc; padding: 15px; border-radius: 5px; margin: 15px 0;">
       <p style="margin: 5px 0;"><strong>Invoice Number:</strong> ${data.invoiceNumber || 'N/A'}</p>
       <p style="margin: 5px 0; font-size: 18px; color: #5a67d8;"><strong>Total Amount:</strong> ₹${data.amount}</p>
@@ -76,7 +76,7 @@ exports.sendInvoiceEmail = (to, data, attachmentPath = null) => {
 
   return sendEmail({
     to,
-    subject: `Invoice ${data.invoiceNumber || ''} from TrimTech`,
+    subject: `Invoice ${data.invoiceNumber || ''} from African Hair Saloon`,
     html: baseTemplate(content),
     attachments,
   });
